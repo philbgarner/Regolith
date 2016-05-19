@@ -1,0 +1,1383 @@
+<html>
+
+<head>
+	<title>Regolith</title>
+
+	<style type='text/css'>
+		
+		body
+		{
+			margin: 0px;
+			padding: 0px;
+			
+			background-color: #000;
+		}
+		
+	</style>
+	
+	<script src='js/gamelogic.js' id='gamelib'></script>
+
+	<script type="text/javascript">
+	  WebFontConfig = {
+	    google: { families: [ 'Share+Tech+Mono::latin' ] }
+	  };
+	  (function() {
+	    var wf = document.createElement('script');
+	    wf.src = 'https://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+	    wf.type = 'text/javascript';
+	    wf.async = 'true';
+	    var s = document.getElementsByTagName('script')[0];
+	    s.parentNode.insertBefore(wf, s);
+	  })(); </script>
+
+	<script>
+
+		var imgRes = new ImageResources();
+		imgRes.addResource(new ImageResource('units sheet', 'images/units_sheet.png'));
+		imgRes.addResource(new ImageResource('unit eva', 'images/unit_eva.png'));
+		imgRes.addResource(new ImageResource('unit transporter rotating', 'images/transporter_rotating.png'));
+		imgRes.addResource(new ImageResource('building metals', 'images/building_metals_top.png'));
+		imgRes.addResource(new ImageResource('building solar', 'images/building_solar_top.png'));
+		imgRes.addResource(new ImageResource('building battery', 'images/building_battery_top.png'));
+		imgRes.addResource(new ImageResource('building battery rotating', 'images/building_battery_iso.png'));
+		imgRes.addResource(new ImageResource('building gas', 'images/building_gas_top.png'));
+		imgRes.addResource(new ImageResource('building gas rotating', 'images/building_gas_iso.png'));
+		imgRes.addResource(new ImageResource('building solar rotating', 'images/building_solar_iso.png'));
+		imgRes.addResource(new ImageResource('building metals rotating', 'images/building_metals_iso.png'));
+		imgRes.addResource(new ImageResource('building habitat1 rotating', 'images/building_habitat1_iso.png'));
+		imgRes.addResource(new ImageResource('building habitat1', 'images/building_habitat1_top.png'));
+		imgRes.addResource(new ImageResource('building habitat2 rotating', 'images/building_habitat2_iso.png'));
+		imgRes.addResource(new ImageResource('building habitat2', 'images/building_habitat2_top.png'));
+		imgRes.addResource(new ImageResource('building launchpad rotating', 'images/building_launchpad_iso.png'));
+		imgRes.addResource(new ImageResource('building factory rotating', 'images/building_factory_iso.png'));
+		imgRes.addResource(new ImageResource('building factory', 'images/building_factory_top.png'));
+		imgRes.addResource(new ImageResource('building launchpad', 'images/building_launchpad_top.png'));
+		imgRes.addResource(new ImageResource('building nuclear', 'images/building_nuclear_top.png'));
+		imgRes.addResource(new ImageResource('building nuclear rotating', 'images/building_nuclear_iso.png'));
+		imgRes.addResource(new ImageResource('building turret', 'images/building_turret.png'));
+		imgRes.addResource(new ImageResource('building turret rotating', 'images/building_cannon_iso.png'));
+		imgRes.addResource(new ImageResource('building farm1 rotating', 'images/building_farm1_iso.png'));
+		imgRes.addResource(new ImageResource('building farm1', 'images/building_farm1_top.png'));
+		imgRes.addResource(new ImageResource('terrain1', 'images/terrain1.png'));
+		imgRes.addResource(new ImageResource('ui header', 'images/ui_resourcesheader.png'));
+		imgRes.addResource(new ImageResource('ui dialog', 'images/ui_dialog.png'));
+		imgRes.addResource(new ImageResource('ui popup', 'images/ui_popup.png'));
+		imgRes.addResource(new ImageResource('ui dialog action', 'images/ui_building_menu.png'));
+		imgRes.addResource(new ImageResource('ui button', 'images/ui_button_95_47.png'));
+		imgRes.addResource(new ImageResource('ui tinybutton', 'images/ui_tinybutton_80_28.png'));
+		imgRes.addResource(new ImageResource('ui text', 'images/ui_text_225_23.png'));
+		imgRes.addResource(new ImageResource('ui multilist', 'images/ui_multilist.png'));
+	
+		var engine;
+		
+		function docLoaded()
+		{
+			var canvas = document.getElementById("surface");
+
+			var ctx = canvas.getContext("2d");
+			engine = new Engine(ctx, imgRes);
+
+			var sprite = new SpriteDef('transport');
+		
+			var frames = new SpriteList('transport_east');
+			frames.addFrame(new SpriteFrame('East0', 0, 0, 64, 64));
+			frames.addFrame(new SpriteFrame('East1', 64, 0, 64, 64));
+			frames.addFrame(new SpriteFrame('East2', 128, 0, 64, 64));
+			frames.addFrame(new SpriteFrame('East3', 192, 0, 64, 64));
+			frames.addFrame(new SpriteFrame('East4', 256, 0, 64, 64));
+			frames.addFrame(new SpriteFrame('East5', 320, 0, 64, 64));
+			frames.addFrame(new SpriteFrame('East6', 384, 0, 64, 64));
+			frames.addFrame(new SpriteFrame('East7', 448, 0, 64, 64));
+			frames.addFrame(new SpriteFrame('East8', 512, 0, 64, 64));
+			frames.addFrame(new SpriteFrame('East9', 576, 0, 64, 64));
+			sprite.addAnim('Moving East', frames);
+			
+			var frames = new SpriteList('transport_west');
+			frames.addFrame(new SpriteFrame('West0', 0, 64, 64, 64));
+			frames.addFrame(new SpriteFrame('West1', 64, 64, 64, 64));
+			frames.addFrame(new SpriteFrame('West2', 128, 64, 64, 64));
+			frames.addFrame(new SpriteFrame('West3', 192, 64, 64, 64));
+			frames.addFrame(new SpriteFrame('West4', 256, 64, 64, 64));
+			frames.addFrame(new SpriteFrame('West5', 320, 64, 64, 64));
+			frames.addFrame(new SpriteFrame('West6', 384, 64, 64, 64));
+			frames.addFrame(new SpriteFrame('West7', 448, 64, 64, 64));
+			frames.addFrame(new SpriteFrame('West8', 512, 64, 64, 64));
+			frames.addFrame(new SpriteFrame('West9', 576, 64, 64, 64));
+			sprite.addAnim('Moving West', frames);
+			
+			var frames = new SpriteList('transport_north');
+			frames.addFrame(new SpriteFrame('North0', 0, 128, 64, 64));
+			frames.addFrame(new SpriteFrame('North1', 64, 128, 64, 64));
+			frames.addFrame(new SpriteFrame('North2', 128, 128, 64, 64));
+			frames.addFrame(new SpriteFrame('North3', 192, 128, 64, 64));
+			frames.addFrame(new SpriteFrame('North4', 256, 128, 64, 64));
+			frames.addFrame(new SpriteFrame('North5', 320, 128, 64, 64));
+			frames.addFrame(new SpriteFrame('North6', 384, 128, 64, 64));
+			frames.addFrame(new SpriteFrame('North7', 448, 128, 64, 64));
+			frames.addFrame(new SpriteFrame('North8', 512, 128, 64, 64));
+			frames.addFrame(new SpriteFrame('North9', 576, 128, 64, 64));
+			sprite.addAnim('Moving North', frames);
+
+			var frames = new SpriteList('transport_south');
+			frames.addFrame(new SpriteFrame('South0', 0, 192, 64, 64));
+			frames.addFrame(new SpriteFrame('South1', 64, 192, 64, 64));
+			frames.addFrame(new SpriteFrame('South2', 128, 192, 64, 64));
+			frames.addFrame(new SpriteFrame('South3', 192, 192, 64, 64));
+			frames.addFrame(new SpriteFrame('South4', 256, 192, 64, 64));
+			frames.addFrame(new SpriteFrame('South5', 320, 192, 64, 64));
+			frames.addFrame(new SpriteFrame('South6', 384, 192, 64, 64));
+			frames.addFrame(new SpriteFrame('South7', 448, 192, 64, 64));
+			frames.addFrame(new SpriteFrame('South8', 512, 192, 64, 64));
+			frames.addFrame(new SpriteFrame('South9', 576, 192, 64, 64));
+			sprite.addAnim('Moving South', frames);
+
+			var frames = new SpriteList('transport_southwest');
+			frames.addFrame(new SpriteFrame('SouthWest0', 0, 256, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthWest1', 64, 256, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthWest2', 128, 256, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthWest3', 192, 256, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthWest4', 256, 256, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthWest5', 320, 256, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthWest6', 384, 256, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthWest7', 448, 256, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthWest8', 512, 256, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthWest9', 576, 256, 64, 64));
+			sprite.addAnim('Moving Southwest', frames);
+
+			var frames = new SpriteList('transport_southeast');
+			frames.addFrame(new SpriteFrame('SouthEast0', 0, 320, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthEast1', 64, 320, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthEast2', 128, 320, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthEast3', 192, 320, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthEast4', 256, 320, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthEast5', 320, 320, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthEast6', 384, 320, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthEast7', 448, 320, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthEast8', 512, 320, 64, 64));
+			frames.addFrame(new SpriteFrame('SouthEast9', 576, 320, 64, 64));
+			sprite.addAnim('Moving Southeast', frames);
+
+			var frames = new SpriteList('transport_northeast');
+			frames.addFrame(new SpriteFrame('NorthEast0', 0, 384, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthEast1', 64, 384, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthEast2', 128, 384, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthEast3', 192, 384, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthEast4', 256, 384, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthEast5', 320, 384, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthEast6', 384, 384, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthEast7', 448, 384, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthEast8', 512, 384, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthEast9', 576, 384, 64, 64));
+			sprite.addAnim('Moving Northeast', frames);
+
+			var frames = new SpriteList('transport_northwest');
+			frames.addFrame(new SpriteFrame('NorthWest0', 0, 448, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthWest1', 64, 448, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthWest2', 128, 448, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthWest3', 192, 448, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthWest4', 256, 448, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthWest5', 320, 448, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthWest6', 384, 448, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthWest7', 448, 448, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthWest8', 512, 448, 64, 64));
+			frames.addFrame(new SpriteFrame('NorthWest9', 576, 448, 64, 64));
+			sprite.addAnim('Moving Northwest', frames);
+
+			sprite.playAnim('Moving Northwest');
+			
+			engine.addSprite('Transport', new SpriteVehicle('Transport', 200, 200, engine, sprite, 'units sheet'));
+
+			var sprite = new SpriteDef('eva');
+
+			var frames = new SpriteList('eva_south');
+			frames.addFrame(new SpriteFrame('South9', 	0, 0, 32, 32));
+			sprite.addAnim('Moving South', frames);
+
+			var frames = new SpriteList('eva_southeast');
+			frames.addFrame(new SpriteFrame('SouthEast9', 	32, 0, 32, 32));
+			sprite.addAnim('Moving Southeast', frames);
+		
+			var frames = new SpriteList('eva_east');
+			frames.addFrame(new SpriteFrame('East0', 	64, 0, 32, 32));
+			sprite.addAnim('Moving East', frames);
+			
+			var frames = new SpriteList('eva_northeast');
+			frames.addFrame(new SpriteFrame('NorthEast9', 	96, 0, 32, 32));
+			sprite.addAnim('Moving Northeast', frames);
+
+			var frames = new SpriteList('eva_north');
+			frames.addFrame(new SpriteFrame('North9', 	128, 0, 32, 32));
+			sprite.addAnim('Moving North', frames);
+
+			var frames = new SpriteList('eva_northwest');
+			frames.addFrame(new SpriteFrame('NorthWest9', 	160, 0, 32, 32));
+			sprite.addAnim('Moving Northwest', frames);
+
+			var frames = new SpriteList('eva_west');
+			frames.addFrame(new SpriteFrame('West0', 	192, 0, 32, 32));
+			sprite.addAnim('Moving West', frames);
+			
+			var frames = new SpriteList('eva_southwest');
+			frames.addFrame(new SpriteFrame('SouthWest9', 	224, 0, 32, 32));
+			sprite.addAnim('Moving Southwest', frames);
+
+			sprite.playAnim('Moving Northwest');
+			
+			engine.addSprite('EVA', new Sprite('EVA', 200, 160, engine, sprite, 'unit eva'));
+
+
+			var sprite = new SpriteDef('eva');
+
+			var frames = new SpriteList('eva_south');
+			frames.addFrame(new SpriteFrame('South9', 	0, 0, 32, 32));
+			sprite.addAnim('Moving South', frames);
+
+			var frames = new SpriteList('eva_southeast');
+			frames.addFrame(new SpriteFrame('SouthEast9', 	32, 0, 32, 32));
+			sprite.addAnim('Moving Southeast', frames);
+		
+			var frames = new SpriteList('eva_east');
+			frames.addFrame(new SpriteFrame('East0', 	64, 0, 32, 32));
+			sprite.addAnim('Moving East', frames);
+			
+			var frames = new SpriteList('eva_northeast');
+			frames.addFrame(new SpriteFrame('NorthEast9', 	96, 0, 32, 32));
+			sprite.addAnim('Moving Northeast', frames);
+
+			var frames = new SpriteList('eva_north');
+			frames.addFrame(new SpriteFrame('North9', 	128, 0, 32, 32));
+			sprite.addAnim('Moving North', frames);
+
+			var frames = new SpriteList('eva_northwest');
+			frames.addFrame(new SpriteFrame('NorthWest9', 	160, 0, 32, 32));
+			sprite.addAnim('Moving Northwest', frames);
+
+			var frames = new SpriteList('eva_west');
+			frames.addFrame(new SpriteFrame('West0', 	192, 0, 32, 32));
+			sprite.addAnim('Moving West', frames);
+			
+			var frames = new SpriteList('eva_southwest');
+			frames.addFrame(new SpriteFrame('SouthWest9', 	224, 0, 32, 32));
+			sprite.addAnim('Moving Southwest', frames);
+
+			sprite.playAnim('Moving Northwest');
+
+			engine.addEnemy('EVA', new AISprite('Space Pirate', 300, 300, engine, sprite, 'unit eva'));
+			
+			// UI
+
+			var sprite = new SpriteDef('ui header');
+			var frames = new SpriteList('LightsOn');
+			frames.addFrame(new SpriteFrame('LightsOn0', 0, 0, 589, 100));
+			sprite.addAnim('LightsOn', frames);
+			var frames = new SpriteList('LightsOff');
+			frames.addFrame(new SpriteFrame('LightsOff0', 0, 106, 589, 100));
+			sprite.addAnim('LightsOff', frames);
+
+			sprite.playAnim('LightsOff');
+			var ui_list = new UIList();
+
+			// UI Logic Classes
+
+			class UIElectricity extends UISprite
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui header');
+						resource_name = 'ui header';
+
+						var frames = new SpriteList('LightsOn');
+						frames.addFrame(new SpriteFrame('LightsOn0', 20, 20, 100, 60));
+						sprite_def.addAnim('LightsOn', frames);
+						var frames = new SpriteList('LightsOff');
+						frames.addFrame(new SpriteFrame('LightsOff0', 20, 126, 100, 60));
+						sprite_def.addAnim('LightsOff', frames);
+
+						sprite_def.playAnim('LightsOn');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+					
+				}
+				onMouseOver(e)
+				{
+					this.sprite_def.playAnim('LightsOff');
+				}
+				onMouseOut(e)
+				{
+					this.sprite_def.playAnim('LightsOn');
+				}
+				onClick(b)
+				{
+					print("Show Dialog");
+					
+				}			
+				
+			}	
+			class UICredits extends UISprite
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui header');
+						resource_name = 'ui header';
+
+						var frames = new SpriteList('LightsOn');
+						frames.addFrame(new SpriteFrame('LightsOn0', 120, 20, 100, 60));
+						sprite_def.addAnim('LightsOn', frames);
+						var frames = new SpriteList('LightsOff');
+						frames.addFrame(new SpriteFrame('LightsOff0', 120, 126, 100, 60));
+						sprite_def.addAnim('LightsOff', frames);
+
+						sprite_def.playAnim('LightsOn');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+				}
+				onMouseOver(e)
+				{
+					this.sprite_def.playAnim('LightsOff');
+				}
+				onMouseOut(e)
+				{
+					this.sprite_def.playAnim('LightsOn');
+				}
+				onClick(b)
+				{
+					print("Show Dialog");
+				}			
+				
+			}
+			class UIFood extends UISprite
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui header');
+						resource_name = 'ui header';
+
+						var frames = new SpriteList('LightsOn');
+						frames.addFrame(new SpriteFrame('LightsOn0', 220, 20, 100, 60));
+						sprite_def.addAnim('LightsOn', frames);
+						var frames = new SpriteList('LightsOff');
+						frames.addFrame(new SpriteFrame('LightsOff0', 220, 126, 100, 60));
+						sprite_def.addAnim('LightsOff', frames);
+
+						sprite_def.playAnim('LightsOn');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+				}
+				onMouseOver(e)
+				{
+					this.sprite_def.playAnim('LightsOff');
+				}
+				onMouseOut(e)
+				{
+					this.sprite_def.playAnim('LightsOn');
+				}
+				onClick(b)
+				{
+					print("Show Dialog");
+				}			
+			
+			}	
+			class UIPersonnel extends UISprite
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui header');
+						resource_name = 'ui header';
+
+						var frames = new SpriteList('LightsOn');
+						frames.addFrame(new SpriteFrame('LightsOn0', 365, 20, 42, 60));
+						sprite_def.addAnim('LightsOn', frames);
+						var frames = new SpriteList('LightsOff');
+						frames.addFrame(new SpriteFrame('LightsOff0', 365, 126, 42, 60));
+						sprite_def.addAnim('LightsOff', frames);
+
+						sprite_def.playAnim('LightsOff');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+				}
+				onMouseOver(e)
+				{
+					this.sprite_def.playAnim('LightsOn');
+				}
+				onMouseOut(e)
+				{
+					this.sprite_def.playAnim('LightsOff');
+				}
+				onClick(b)
+				{
+					var d = engine.ui.getUIElementByName('ui dialog personnel');
+					if (d.status == "closed")
+					{
+						d.slideIn();
+					}
+					else
+					{
+						d.slideOut();
+					}
+				}
+			
+			}
+			class UIRocketry extends UISprite
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui header');
+						resource_name = 'ui header';
+
+						var frames = new SpriteList('LightsOn');
+						frames.addFrame(new SpriteFrame('LightsOn0', 411, 20, 34, 60));
+						sprite_def.addAnim('LightsOn', frames);
+						var frames = new SpriteList('LightsOff');
+						frames.addFrame(new SpriteFrame('LightsOff0', 411, 126, 34, 60));
+						sprite_def.addAnim('LightsOff', frames);
+
+						sprite_def.playAnim('LightsOff');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+				}
+				onMouseOver(e)
+				{
+					this.sprite_def.playAnim('LightsOn');
+				}
+				onMouseOut(e)
+				{
+					this.sprite_def.playAnim('LightsOff');
+				}
+				onClick(b)
+				{
+					var d = engine.ui.getUIElementByName('ui dialog rocketry');
+					if (d.status == "closed")
+					{
+						d.slideIn();
+					}
+					else
+					{
+						d.slideOut();
+					}
+				}			
+				
+			}
+			class UIDefense extends UISprite
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui header');
+						resource_name = 'ui header';
+
+						var frames = new SpriteList('LightsOn');
+						frames.addFrame(new SpriteFrame('LightsOn0', 446, 20, 34, 60));
+						sprite_def.addAnim('LightsOn', frames);
+						var frames = new SpriteList('LightsOff');
+						frames.addFrame(new SpriteFrame('LightsOff0', 446, 126, 34, 60));
+						sprite_def.addAnim('LightsOff', frames);
+
+						sprite_def.playAnim('LightsOff');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+				}
+				onMouseOver(e)
+				{
+					this.sprite_def.playAnim('LightsOn');
+				}
+				onMouseOut(e)
+				{
+					this.sprite_def.playAnim('LightsOff');
+				}
+				onClick(b)
+				{
+					var d = engine.ui.getUIElementByName('ui dialog defense');
+					if (d.status == "closed")
+					{
+						d.slideIn();
+					}
+					else
+					{
+						d.slideOut();
+					}
+				}			
+				
+			}
+			class UIBuildings extends UISprite
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui header');
+						resource_name = 'ui header';
+
+						var frames = new SpriteList('LightsOn');
+						frames.addFrame(new SpriteFrame('LightsOn0', 482, 20, 40, 60));
+						sprite_def.addAnim('LightsOn', frames);
+						var frames = new SpriteList('LightsOff');
+						frames.addFrame(new SpriteFrame('LightsOff0', 482, 126, 40, 60));
+						sprite_def.addAnim('LightsOff', frames);
+
+						sprite_def.playAnim('LightsOff');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+				}
+				onMouseOver(e)
+				{
+					this.sprite_def.playAnim('LightsOn');
+				}
+				onMouseOut(e)
+				{
+					this.sprite_def.playAnim('LightsOff');
+				}				
+				onClick(b)
+				{
+					var d = engine.ui.getUIElementByName('ui dialog buildings');
+					if (d.status == "closed")
+					{
+						d.slideIn();
+					}
+					else
+					{
+						d.slideOut();
+					}
+				}			
+			}
+			class UISatellites extends UISprite
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui header');
+						resource_name = 'ui header';
+
+						var frames = new SpriteList('LightsOn');
+						frames.addFrame(new SpriteFrame('LightsOn0', 524, 20, 40, 60));
+						sprite_def.addAnim('LightsOn', frames);
+						var frames = new SpriteList('LightsOff');
+						frames.addFrame(new SpriteFrame('LightsOff0', 524, 126, 40, 60));
+						sprite_def.addAnim('LightsOff', frames);
+
+						sprite_def.playAnim('LightsOff');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+				}
+				onMouseOver(e)
+				{
+					this.sprite_def.playAnim('LightsOn');
+				}
+				onMouseOut(e)
+				{
+					this.sprite_def.playAnim('LightsOff');
+				}
+				onClick(b)
+				{
+					var d = engine.ui.getUIElementByName('ui dialog satellites');
+					if (d.status == "closed")
+					{
+						d.slideIn();
+					}
+					else
+					{
+						d.slideOut();
+					}
+				}			
+			}
+			
+			class UIPopup extends UIDialog
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui popup');
+						resource_name = 'ui popup';
+
+						var frames = new SpriteList('UIPopup');
+						frames.addFrame(new SpriteFrame('UIPopup', 0, 0, 343, 331));
+						sprite_def.addAnim('UIPopup', frames);
+						
+						sprite_def.playAnim('UIPopup');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+
+					this.y = 150;
+
+					var me = this;
+					class UIButtonOk extends UIButton
+					{
+						onClick(b)
+						{
+							me.slideOut();
+						}
+					}
+					
+					this.ui.addUIElement(new UIButtonOk('Ok', 215, 250, engine));
+				}
+				slideIn()
+				{
+					super.slideIn();
+					engine.paused = true;
+				}
+				slideOut()
+				{
+					super.slideOut();
+					engine.paused = false;
+				}
+				onClick(b)
+				{
+				}
+			}
+			class UIDialogPersonnel extends UIDialog
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui dialog');
+						resource_name = 'ui dialog';
+
+						var frames = new SpriteList('Dialog');
+						frames.addFrame(new SpriteFrame('Dialog', 0, 0, 578, 560));
+						sprite_def.addAnim('Dialog', frames);
+						
+						sprite_def.playAnim('Dialog');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+					
+					var me = this;
+					class UIButtonOk extends UIButton
+					{
+						onClick(e)
+						{
+							me.slideOut();
+						}
+					}
+					
+					this.ui.addUIElement(new UIButtonOk('Ok', 400, 75, engine));
+					
+					var ml = new UIMultiList('ui multilist', 50, 150, engine);
+					ml.addItem("Test");
+					ml.addItem("Test2");
+					this.multilist = ml;
+					this.ui.addUIElement(ml);
+				}
+				onClick(b)
+				{
+			
+				}
+				
+				draw()
+				{
+					// Corporate Personnel Screen
+									
+					super.draw();
+					
+					var ctx = this.ctx;
+					ctx.font = "bold 32px Share Tech Mono";
+					ctx.fillStyle = "#89ae8e";
+					ctx.fillText("Corporate Personnel", this.x + 25, this.y + 50);
+					
+					ctx.font = "Italic 14px Share Tech Mono";
+					ctx.fillText("Currently 1 employees.", this.x + 35, this.y + 90);
+
+				}
+			}
+			class UIDialogRocketry extends UIDialog
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui dialog');
+						resource_name = 'ui dialog';
+
+						var frames = new SpriteList('Dialog');
+						frames.addFrame(new SpriteFrame('Dialog', 0, 0, 578, 560));
+						sprite_def.addAnim('Dialog', frames);
+						
+						sprite_def.playAnim('Dialog');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+
+					var me = this;
+					class UIButtonOk extends UIButton
+					{
+						onClick(b)
+						{
+							me.slideOut();
+						}
+					}
+					
+					this.ui.addUIElement(new UIButtonOk('Ok', 400, 75, engine));
+				}
+				onClick(b)
+				{
+				}
+				
+				draw()
+				{
+					// Rocketry Screen
+									
+					super.draw();
+					
+					var ctx = this.ctx;
+					ctx.font = "bold 32px Share Tech Mono";
+					ctx.fillStyle = "#89ae8e";
+					ctx.fillText("Rocketry", this.x + 25, this.y + 50);
+
+					
+					ctx.font = "Italic 14px Share Tech Mono";
+					ctx.fillText("You have no launchpads.", this.x + 25, this.y + 150);
+				}
+			}
+			class UIDialogDefense extends UIDialog
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui dialog');
+						resource_name = 'ui dialog';
+
+						var frames = new SpriteList('Dialog');
+						frames.addFrame(new SpriteFrame('Dialog', 0, 0, 578, 560));
+						sprite_def.addAnim('Dialog', frames);
+						
+						sprite_def.playAnim('Dialog');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+
+					var me = this;
+					class UIButtonOk extends UIButton
+					{
+						onClick(b)
+						{
+							me.slideOut();
+						}
+					}
+					
+					this.ui.addUIElement(new UIButtonOk('Ok', 400, 75, engine));
+				}
+				onClick(b)
+				{
+				}
+				
+				draw()
+				{
+					// Defense Screen
+									
+					super.draw();
+					
+					var ctx = this.ctx;
+					ctx.font = "bold 32px Share Tech Mono";
+					ctx.fillStyle = "#89ae8e";
+					ctx.fillText("Defense", this.x + 25, this.y + 50);
+					
+					ctx.font = "Italic 14px Share Tech Mono";
+					ctx.fillText("There are no mercenaries available.", this.x + 25, this.y + 150);
+					ctx.fillText("You have no military blueprints.", this.x + 25, this.y + 350);
+				}
+			}
+			class UIDialogBuildings extends UIDialog
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui dialog');
+						resource_name = 'ui dialog';
+
+						var frames = new SpriteList('Dialog');
+						frames.addFrame(new SpriteFrame('Dialog', 0, 0, 578, 560));
+						sprite_def.addAnim('Dialog', frames);
+						
+						sprite_def.playAnim('Dialog');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+
+					var me = this;
+					class UIButtonOk extends UIButton
+					{
+						onClick(b)
+						{
+							me.slideOut();
+						}
+					}
+					class UIButtonBuild extends UIButton
+					{
+						onClick(e)
+						{
+							var s = me.ui.getUIElementByName("ui multilist").getSelected();
+							if (s.length > 0)
+							{
+								engine.startPlaceBuilding(s[0]);
+								me.slideOut();
+							}
+						}
+					}
+					this.ui.addUIElement(new UIButtonBuild('Build', 400, 200, engine));
+					this.ui.addUIElement(new UIButtonOk('Ok', 400, 75, engine));
+					
+					var sprite = new SpriteDef('preview');
+
+					var frames = new SpriteList('preview');
+					frames.addFrame(new SpriteFrame('East0', 0, 0, 128, 128, 5));
+					frames.addFrame(new SpriteFrame('East1', 128, 0, 128, 128, 5));
+					frames.addFrame(new SpriteFrame('East2', 256, 0, 128, 128, 5));
+					frames.addFrame(new SpriteFrame('East3', 384, 0, 128, 128, 5));
+					frames.addFrame(new SpriteFrame('East4', 512, 0, 128, 128, 5));
+					frames.addFrame(new SpriteFrame('East5', 0, 128, 128, 128, 5));
+					frames.addFrame(new SpriteFrame('East6', 128, 128, 128, 128, 5));
+					frames.addFrame(new SpriteFrame('East7', 256, 128, 128, 128, 5));
+					frames.addFrame(new SpriteFrame('East8', 384, 128, 128, 128, 5));
+					frames.addFrame(new SpriteFrame('East8', 512, 128, 128, 128, 5));
+					sprite.addAnim('Rotating', frames);
+					sprite.playAnim('Rotating');
+					this.rotatingBuilding = new UISprite('rotating building', 50, 65, engine, sprite, 'building solar rotating')
+					this.ui.addUIElement(this.rotatingBuilding);
+					
+					var rotatingBuilding = this.rotatingBuilding;
+					
+					class UIBuildingsList extends UIMultiList
+					{
+						onClick(e)
+						{
+							if (e != undefined)
+							{
+								super.onClick(e);
+							}
+							var sel = this.getSelected()[0];
+
+							if (sel == "Solar Array")
+							{
+								rotatingBuilding.sheetUnits = engine.image_resources.getResource("building solar rotating");
+							}
+							else if (sel == "Battery Array")
+							{
+								rotatingBuilding.sheetUnits = engine.image_resources.getResource("building battery rotating");
+							}
+							else if (sel == "Gas Extraction")
+							{
+								rotatingBuilding.sheetUnits = engine.image_resources.getResource("building gas rotating");
+							}
+							else if (sel == "Metals Extraction")
+							{
+								rotatingBuilding.sheetUnits = engine.image_resources.getResource("building metals rotating");
+							}
+							else if (sel == "Basic Habitat Module")
+							{
+								rotatingBuilding.sheetUnits = engine.image_resources.getResource("building habitat1 rotating");
+							}
+							else if (sel == "Farming Biodome")
+							{
+								rotatingBuilding.sheetUnits = engine.image_resources.getResource("building farm1 rotating");
+							}
+							else if (sel == "Biodome Habitat")
+							{
+								rotatingBuilding.sheetUnits = engine.image_resources.getResource("building habitat2 rotating");
+							}
+							else if (sel == "Launch Pad")
+							{
+								rotatingBuilding.sheetUnits = engine.image_resources.getResource("building launchpad rotating");
+							}
+							else if (sel == "Nuclear Power Plant")
+							{
+								rotatingBuilding.sheetUnits = engine.image_resources.getResource("building nuclear rotating");
+							}
+							else if (sel == "Factory")
+							{
+								rotatingBuilding.sheetUnits = engine.image_resources.getResource("building factory rotating");
+							}
+							else if (sel == "Cannon Turret")
+							{
+								rotatingBuilding.sheetUnits = engine.image_resources.getResource("building turret rotating");
+							}
+						}
+					}
+					
+					this.curPage = 0;
+					this.pages = [
+						["Solar Array"
+							,"Battery Array"
+							,"Gas Extraction"
+							,"Metals Extraction"
+							,"Basic Habitat Module"
+							,"Farming Biodome"
+						]
+						,["Launch Pad"
+							,"Factory"
+							,"Biodome Habitat"
+							,"Cannon Turret"
+							,"Nuclear Power Plant"
+							,""
+						]
+					];
+					
+					var ml = new UIBuildingsList('ui multilist', 50, 200, engine);
+					ml.addItem("Solar Array");
+					ml.addItem("Battery Array");
+					ml.addItem("Gas Extraction");
+					ml.addItem("Metals Extraction");
+					ml.addItem("Basic Habitat Module");
+					ml.addItem("Farming Biodome");
+					this.multilist = ml;
+					ml.setSelectedIndex(0);
+					this.ui.addUIElement(ml);
+					
+					class UIPrevious extends UITinyButton
+					{
+						onClick(e)
+						{
+							me.curPage = me.setMenuPage(me.curPage - 1);
+							me.multilist.onClick();
+						}
+					}
+					
+					class UINext extends UITinyButton
+					{
+						onClick(e)
+						{
+							me.curPage = me.setMenuPage(me.curPage + 1);
+							me.multilist.onClick();
+						}
+					}
+					
+					var prev = new UIPrevious('Prev.', 50, 426, engine);
+					var next = new UINext('Next', 300, 426, engine);
+					this.ui.addUIElement(prev);
+					this.ui.addUIElement(next);
+			
+				}
+				setMenuPage(index)
+				{
+					if (index < 0)
+					{
+						index = 0;
+					}
+					else if (index >= this.pages.length)
+					{
+						index = this.pages.length - 1;
+					}
+					
+					var ml = this.multilist;
+
+					for (var i = 0; i < 6; i++)
+					{
+						ml.list.list[i].name = this.pages[index][i];
+					}
+					return index;
+				}
+				onClick(e)
+				{
+
+				}
+				getBuildingCost(name)
+				{
+					switch(name)
+					{
+						case "Solar Array":
+							return new SolarBuilding('solar array', 0, 0, engine, new Sprite(""), 'building solar').getBuildCost();
+						break;
+						case "Battery Array":
+							return new BatteryBuilding('solar array', 0, 0, engine, new Sprite(""), 'building solar').getBuildCost();
+						break;
+						case "Gas Extraction":
+							return new GasBuilding('solar array', 0, 0, engine, new Sprite(""), 'building solar').getBuildCost();
+						break;
+						case "Metals Extraction":
+							return new MetalsBuilding('solar array', 0, 0, engine, new Sprite(""), 'building solar').getBuildCost();
+						break;
+						case "Basic Habitat Module":
+							return new Habitat1Building('solar array', 0, 0, engine, new Sprite(""), 'building solar').getBuildCost();
+						break;
+						case "Farming Biodome":
+							return new Farm1Building('solar array', 0, 0, engine, new Sprite(""), 'building solar').getBuildCost();
+						break;
+						case "Launch Pad":
+							return new LaunchPadBuilding('solar array', 0, 0, engine, new Sprite(""), 'building solar').getBuildCost();
+						break;
+						case "Factory":
+							return new FactoryBuilding('solar array', 0, 0, engine, new Sprite(""), 'building solar').getBuildCost();
+						break;
+						case "Biodome Habitat":
+							return new Habitat2Building('solar array', 0, 0, engine, new Sprite(""), 'building solar').getBuildCost();
+						break;
+						case "Cannon Turret":
+							return new Turret('solar array', 0, 0, engine, new Sprite(""), 'building solar').getBuildCost();
+						break;
+						case "Nuclear Power Plant":
+							return new NuclearBuilding('solar array', 0, 0, engine, new Sprite(""), 'building solar').getBuildCost();
+						break;
+					}
+				}
+				draw()
+				{
+					// Buildings Screen
+									
+					super.draw();
+					
+					var ctx = this.ctx;
+					ctx.font = "bold 32px Share Tech Mono";
+					ctx.fillStyle = "#89ae8e";
+					ctx.fillText("Buildings", this.x + 25, this.y + 50);
+					
+					ctx.font = "Italic 14px Share Tech Mono";
+					
+					var selname = this.multilist.getSelected();
+					var costs = this.getBuildingCost(selname[0]);
+					ctx.fillText("Costs:", this.x + 205, this.y + 75);
+
+					
+					if (costs != undefined)
+					{
+						for (var i = 0; i < costs.length; i++)
+						{
+							ctx.fillText(costs[i].name, this.x + 225, this.y + 100 + i * 14);
+							ctx.fillText(costs[i].qty, this.x + 300, this.y + 100 + i * 14);
+						}
+					}
+					
+					var maxPage = this.pages.length;
+					var minPage = this.curPage + 1;
+					
+					ctx.fillText(minPage + " / " + maxPage, this.x + 195, this.y + 445);
+				}
+			}
+			class UIDialogSatellites extends UIDialog
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui dialog');
+						resource_name = 'ui dialog';
+
+						var frames = new SpriteList('Dialog');
+						frames.addFrame(new SpriteFrame('Dialog', 0, 0, 578, 560));
+						sprite_def.addAnim('Dialog', frames);
+						
+						sprite_def.playAnim('Dialog');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+
+					var me = this;
+					class UIButtonOk extends UIButton
+					{
+						onClick(b)
+						{
+							me.slideOut();
+						}
+					}
+					
+					this.ui.addUIElement(new UIButtonOk('Ok', 400, 75, engine));
+				}
+				onClick(b)
+				{
+				}
+				
+				draw()
+				{
+					// Satellites Screen
+									
+					super.draw();
+					
+					var ctx = this.ctx;
+					ctx.font = "bold 32px Share Tech Mono";
+					ctx.fillStyle = "#89ae8e";
+					ctx.fillText("Satellites", this.x + 25, this.y + 50);
+
+					ctx.font = "Italic 14px Share Tech Mono";
+					ctx.fillText("You do not have a communications station.", this.x + 25, this.y + 200);
+
+					ctx.fillText("You have no satellites to connect to.", this.x + 25, this.y + 350);
+				}
+			}
+			class UIDialogActions extends UIDialog
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					if (sprite_def == undefined)
+					{
+						sprite_def = new SpriteDef('ui dialog');
+						resource_name = 'ui dialog action';
+
+						var frames = new SpriteList('Dialog');
+						frames.addFrame(new SpriteFrame('Dialog', 0, 0, 500, 84));
+						sprite_def.addAnim('Dialog', frames);
+						
+						sprite_def.playAnim('Dialog');
+
+					}
+					super(name, x, y, controller, sprite_def, resource_name);
+					
+					this.y = this.getH() + canvasH;
+					this.x = 150;
+		
+					this.status = "closed"
+		
+					this.slidingIn = false;
+					this.slidingOut = false;
+					this.slideSpeed = 50;
+
+				}
+				onClick(b)
+				{
+				}
+				
+				draw()
+				{
+					// Satellites Screen
+									
+					super.draw();
+					
+					/*var ctx = this.ctx;
+					ctx.font = "bold 32px Share Tech Mono";
+					ctx.fillStyle = "#89ae8e";
+					ctx.fillText("Satellites", this.x + 25, this.y + 50);
+
+					ctx.font = "Italic 14px Share Tech Mono";
+					ctx.fillText("You do not have a communications station.", this.x + 25, this.y + 200);
+
+					ctx.fillText("You have no satellites to connect to.", this.x + 25, this.y + 350);*/
+					
+				}
+				refreshUI()
+				{
+					var me = this;
+					class UIButtonScrap extends UITinyButton
+					{
+						onClick(e)
+						{
+							// TODO: Dialog asking 'are you sure?'
+							//
+							// Also, add a percentage of the buildCost to inventory.
+							engine.removeSprite(engine.selSprite);
+							me.slideOut();
+						}
+					}
+					class UIButtonUpgrade extends UITinyButton
+					{
+						onClick(e)
+						{
+							alert("TODO: Y/N Dialog with cost to upgrade.");
+						}
+					}
+					class UIButtonProduce extends UITinyButton
+					{
+						onClick(e)
+						{
+							alert("TODO: Pop-up list of things the factory can produce.");	
+						}
+					}
+					class UIButtonOn extends UITinyButton
+					{
+						onClick(e)
+						{
+							engine.selSprite.Ond = !engine.selSprite.Ond;
+							me.refreshUI();
+						}
+					}
+					class UIButtonExport extends UITinyButton
+					{
+						onClick(e)
+						{
+							var d = engine.ui.getUIElementByName('ui popup');
+							if (d.status == "closed")
+							{
+								d.slideIn();
+							}
+							else
+							{
+								d.slideOut();
+							}
+						}
+					}
+					class UIButtonImport extends UITinyButton
+					{
+						onClick(e)
+						{
+							alert("TODO: Show imports popup.");
+						}
+					}
+
+					// All Building Types
+					this.ui.addUIElement(new UIButtonUpgrade('Upgrade', 300, 30, engine));
+					this.ui.addUIElement(new UIButtonScrap('Scrap', 390, 30, engine));
+					
+					var dx = 30;
+					if (engine.selSprite.name == "Factory")
+					{
+						this.ui.addUIElement(new UIButtonProduce('Queue', dx, 30, engine));
+						dx += 90
+					}
+					if (engine.selSprite.name == "Launch Pad")
+					{
+						this.ui.addUIElement(new UIButtonExport('Exports', dx, 30, engine));
+						dx += 90
+						this.ui.addUIElement(new UIButtonImport('Imports', dx, 30, engine));
+						dx += 90
+					}
+
+					var label = "On";
+					if (engine.selSprite.Ond)
+					{
+						label = "Off";
+					}
+					this.ui.addUIElement(new UIButtonOn(label, dx, 30, engine));
+
+				}
+				slideIn()
+				{
+					this.slidingIn = true;
+					this.slidingOut = false;
+
+					this.refreshUI();
+
+				}
+				slideOut()
+				{
+					this.slidingOut = true;
+					this.slidingIn = false;
+				}
+				update()
+				{
+					if ((engine.selSprite == undefined || (engine.selSprite.getType() != "SpriteBuilding" && engine.selSprite.getType() != "ElectricityBuilding"))
+						&& this.status == "open" && !this.slidingOut)
+					{
+						this.slideOut();
+					}
+				
+					if (this.slidingIn && this.y - this.slideSpeed > (canvasH - this.getH()))
+					{
+						this.y -= this.slideSpeed;
+					}
+					else if (this.slidingIn && this.y - this.slideSpeed <= (canvasH - this.getH()))
+					{
+						this.y = canvasH - this.getH();
+						this.slidingIn = false;
+						this.status = "open";
+					}
+
+					if (this.slidingOut && this.y + this.slideSpeed < canvasH)
+					{
+						this.y += this.slideSpeed;
+					}
+					else if (this.slidingOut && this.y + this.slideSpeed >= canvasH)
+					{
+						this.y = canvasH;
+						this.slidingOut = false;
+						this.status = "closed";
+					}
+	
+					this.sprite_def.update();
+		
+					this.keyUpdate();
+				
+					if (!this.isMoving)
+					{
+						this.pauseAnim();
+					}
+		
+					this.ui.update();
+				}
+			}
+			
+			class UIHud extends UISprite
+			{
+				constructor(name, x, y, controller, sprite_def, resource_name)
+				{
+					super(name, x, y, controller, sprite_def, resource_name);
+				}
+				onClick(e)
+				{
+				}
+				onKeyPress(e)
+				{
+					if (e.keyCode == 13 && e.altKey)
+					{
+						toggleFullscreen();
+					}
+				}
+			}
+			
+			ui_list.addUIElement(new UIHud('ui headers', 0, 0, engine, sprite, 'ui header'));
+			ui_list.addUIElement(new UIElectricity('ui electricity', 20, 20, engine));
+			ui_list.addUIElement(new UICredits('ui credits', 120, 20, engine));
+			ui_list.addUIElement(new UIFood('ui food', 220, 20, engine));
+			ui_list.addUIElement(new UIPersonnel('ui food', 365, 20, engine));
+			ui_list.addUIElement(new UIRocketry('ui rocketry', 411, 20, engine));
+			ui_list.addUIElement(new UIDefense('ui defense', 446, 20, engine));
+			ui_list.addUIElement(new UIBuildings('ui buildings', 482, 20, engine));
+			ui_list.addUIElement(new UISatellites('ui satellites', 524, 20, engine));
+
+			ui_list.addUIElement(new UIDialogPersonnel('ui dialog personnel', 0, 0, engine));
+			ui_list.addUIElement(new UIDialogRocketry('ui dialog rocketry', 0, 0, engine));
+			ui_list.addUIElement(new UIDialogDefense('ui dialog defense', 0, 0, engine));
+			ui_list.addUIElement(new UIDialogBuildings('ui dialog buildings', 0, 0, engine));
+			ui_list.addUIElement(new UIDialogSatellites('ui dialog satellites', 0, 0, engine));
+			
+			ui_list.addUIElement(new UIPopup('ui popup', 0, 0, engine));
+			
+			ui_list.addUIElement(new UIDialogActions('ui dialog actions', 0, 0, engine));
+
+			engine.setUIHandler(ui_list);
+			
+			window.requestAnimationFrame(update);
+
+		
+		}
+		
+		
+		function update()
+		{		
+		
+			
+			window.requestAnimationFrame(update);
+
+			var now = Date.now();
+			var elapsed = now - engine.oldTime;
+		
+			if (elapsed > engine.fpsInterval)
+			{
+				engine.update();
+				
+				engine.oldTime = now - (elapsed % engine.fpsInterval);
+			}
+		}
+		
+
+	</script>
+
+</head>
+
+<body onload='docLoaded();'>
+
+	<canvas id='surface' width="800px" height="600px"></canvas>
+
+</body>
+
+
+</html>

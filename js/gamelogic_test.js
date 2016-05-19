@@ -1,0 +1,742 @@
+
+// Global Variables
+
+var _DEBUG = true;
+
+var canvasW = 800;
+var canvasH = 600;
+
+
+// Debug output.
+function print(message)
+{
+	if (_DEBUG)
+	{
+		console.log(">>>" + message);
+	}
+}
+
+
+// Data Models
+
+class RectList
+{
+	constructor()
+	{
+		this.list = [];
+	}
+	addRect(x, y, w, h)
+	{
+	}
+	getRect(index)
+	{
+		if (this.list[index] != undefined)
+		{
+			return this.list[index];
+		}
+		else
+		{
+			return false;
+		}
+	}
+	getRectAt(x, y)
+	{
+		for (var i = 0; i < this.list.length; i++)
+		{
+			var r = this.list[i];
+			if (x >= r.x && x <= r.x + r.w
+				&& y >= r.y && y <= r.y + r.h)
+			{
+				return r;
+			}
+		}
+		return false;
+	}
+}
+
+class SpriteFrame
+{
+	constructor(name, srcX, srcY, width, height, frameTicks)
+	{
+		var frameTicks = frameTicks;
+		if (frameTicks == undefined) { frameTicks = 2; }
+		this.srcX = srcX;
+		this.srcY = srcY;
+		this.width = width;
+		this.height = height;
+		this.frameTicks = frameTicks;
+		this.name = name;
+	}
+
+	getFrameTicks()
+	{
+		return this.frameTicks;
+	}
+	getX()
+	{
+		return this.srcX;
+	}
+	getY()
+	{
+		return this.srcY;
+	}
+	getWidth()
+	{
+		return this.width;
+	}
+	getHeight()
+	{
+		return this.height;
+	}
+	getName()
+	{
+		return this.name;
+	}
+
+	setFrameTicks(frameTicks)
+	{
+		this.frameTicks = frameTicks;
+		return true;
+	}
+}
+class SpriteList
+{
+	constructor(name)
+	{
+		this.name = name;
+		this.list = [];
+	}
+	getFrame(frameId)
+	{
+		if (frameId > this.list.length || frameId < 0)
+		{
+			return false;
+		}
+		return this.list[frameId];
+	}
+	nextFrame(frameId)
+	{
+		frameId++;
+		if (frameId >= this.list.length)
+		{
+			return 0;
+		}
+		else if (frameId < 0)
+		{
+			return this.list.length - 1;
+		}
+		return frameId;
+	}
+	getFrameByName(name)
+	{
+		for (var i=0; i < this.list.length; i++)
+		{
+			if (name == this.list[i].name)
+			{
+				return this.list[i];
+			}
+		}
+		return false;
+	}
+	addFrame(spriteFrame)
+	{
+		this.list.push(spriteFrame);
+		return true;
+	}
+}
+
+class SpriteDef
+{
+	constructor(name)
+	{
+		this.name = name;
+		this.animId = undefined;
+		this.frameId = 0;
+		this.tickCount = 0;
+		this.paused = true;
+
+		this.animations = {};
+	}
+
+	addAnim(animId, spriteFrames)
+	{
+		if (this.animations[animId] != undefined)
+		{
+			// Animation by that name already exists.
+			return false;
+		}
+		this.animations[animId] = spriteFrames;
+		return true;
+	}
+	getAnim(animId)
+	{
+		if (this.animations[animId] != undefined)
+		{
+			return this.animations[animId];
+		}
+		return false;
+	}
+	getCurrentFrame()
+	{
+		return this.getAnim(this.animId).getFrame(this.frameId);
+	}
+	playAnim(animId)
+	{		
+		this.paused = false;
+		if (this.animations[animId] != undefined && this.animId != animId)
+		{
+			this.animId = animId;
+			this.tickCount = 0;
+		}
+		else
+		{
+			// No animation with that Id found in the list.
+			return false;
+		}
+		return true;
+	}
+	unpauseAnim()
+	{
+		this.paused = false;
+	}
+	pauseAnim()
+	{
+		this.paused = true;
+	}
+	update()
+	{
+		if (this.paused)
+		{
+			return;
+		}
+		var currentAnim = this.animations[this.animId];
+		var currentFrame = currentAnim.getFrame(this.frameId);
+
+		if (this.tickCount >= currentFrame.getFrameTicks())
+		{
+			this.tickCount = 0;
+			this.frameId = currentAnim.nextFrame(this.frameId);
+		}
+		else
+		{
+			this.tickCount++;
+		}
+	}
+}
+
+class ImageResource
+{
+	constructor(name, filename)
+	{
+		print(filename + ' loaded.');
+		this.name = name;
+		this.filename = filename;
+		this.imgDOM = new Image();
+		this.imgDOM.error = false;
+		this.imgDOM.src = filename;
+		var me = this;
+		this.imgDOM.onerror = function()
+		{
+			me.imgDOM.error = true;			
+		}
+	}
+	draw(x, y, w, h)
+	{
+		
+	}
+	
+}
+class ImageResources
+{
+	constructor()
+	{
+		this.resource_list = {};
+	}
+	addResource(resource)
+	{
+		if (this.resource_list[resource.name] == undefined)
+		{
+			this.resource_list[resource.name] = resource;
+			return true;
+		}
+		return false;
+	}
+	getResource(name)
+	{
+		if (this.resource_list[name] == undefined)
+		{
+			return false;
+		}
+		else
+		{
+			return this.resource_list[name];
+		}
+	}
+}
+
+// View Controller
+
+
+class Engine
+{
+	constructor(context, image_resources)
+	{
+		this.ctx = context;
+		this.image_resources = image_resources;
+		this.terrainImage = image_resources.getResource('terrain1');
+		
+		this.selSprite = undefined;
+				
+		this.sprites = [];
+		
+		this.keys = [];
+		
+		this.ui = new UIList();
+		
+		var me = this;
+		
+		window.addEventListener('keydown', function(e) {
+			me.keys[e.keyCode] = true;
+		});
+		window.addEventListener('keyup', function(e) {
+			me.keys[e.keyCode] = false;
+		});
+	}
+	setUIHandler()
+	{
+		
+	}
+	isKeyPressed(keyCode)
+	{
+		if (this.keys[keyCode] != undefined)
+		{
+			return this.keys[keyCode];
+		}
+		else
+		{
+			return false;
+		}
+	}
+	addSprite(name, newSprite)
+	{
+		this.sprites.push(newSprite);
+		if (this.selSprite == undefined)
+		{
+			this.selSprite = newSprite;
+		}
+		return true;
+	}
+	update()
+	{
+		this.ctx.clearRect(0, 0, canvasW, canvasH);
+
+		// Draw the background (terrain) image.
+		this.ctx.drawImage(this.terrainImage.imgDOM, 0, 0, canvasW, canvasH, 0, 0, canvasW, canvasH);
+
+		// Update Sprites	
+		for (var i = 0; i < this.sprites.length; i++)
+		{
+			this.sprites[i].update();
+		}
+
+		// Update UI
+		for (var i = 0; i < this.sprites.length; i++)
+		{
+			var f = this.ui.getUIFrame(i)
+			if (f)
+			{
+				f.update();
+			}
+		}
+
+	}
+}
+
+
+// Data Views
+
+class Sprite
+{
+	constructor(name, x, y, controller, sprite_def, resource_name)
+	{
+		this.setXY(x, y);
+		this.sprite_def = sprite_def;
+		this.name = name;
+		this.controller = controller;
+		this.isMoving = false;
+
+		this.ctx = this.controller.ctx;
+		this.sheetUnits = this.controller.image_resources.getResource(resource_name);
+	}
+	getType()
+	{
+		return 'Sprite';
+	}
+	getX()
+	{
+		return this.x;
+	}
+	getY()
+	{
+		return this.y;
+	}
+	setX(x)
+	{
+		this.x = x;
+	}
+	setY(y)
+	{
+		this.y = y;
+	}
+	setXY(x, y)
+	{
+		this.x = x;
+		this.y = y;
+	}
+	move(x, y)
+	{
+		this.x += x;
+		this.y += y;
+	}
+	
+	keyUpdate()
+	{
+		this.isMoving = false;
+		if (this.controller.isKeyPressed(68))
+		{
+			// Move Right
+			this.move(1, 0);
+			this.playAnim('Moving East');
+			this.isMoving = true;
+		}
+		if (this.controller.isKeyPressed(65))
+		{
+			// Move Left
+			this.move(-1, 0);
+			this.playAnim('Moving West');
+			this.isMoving = true;
+		}
+		if (this.controller.isKeyPressed(83))
+		{
+			// Move Down
+			this.move(0, 1);
+			this.playAnim('Moving South');
+			this.isMoving = true;
+		}
+		if (this.controller.isKeyPressed(87))
+		{
+			// Move Up
+			this.move(0, -1);
+			this.playAnim('Moving North');
+			this.isMoving = true;
+		}
+		if (this.controller.isKeyPressed(87) && this.controller.isKeyPressed(65))
+		{
+			// Move Right & Left
+			this.playAnim('Moving Northwest');
+		}
+		if (this.controller.isKeyPressed(87) && this.controller.isKeyPressed(68))
+		{
+			// Move Up & Right
+			this.playAnim('Moving Northeast');
+		}
+		if (this.controller.isKeyPressed(83) && this.controller.isKeyPressed(65))
+		{
+			// Move Down & Left
+			this.playAnim('Moving Southwest');
+		}
+		if (this.controller.isKeyPressed(83) && this.controller.isKeyPressed(68))
+		{
+			// Move Down & Right
+			this.playAnim('Moving Southeast');
+		}
+
+	}
+
+	update()
+	{
+		this.sprite_def.update();
+		
+		this.keyUpdate();
+				
+		if (!this.isMoving)
+		{
+			this.pauseAnim();
+		}
+		
+		this.draw();
+	}
+	playAnim(animId)
+	{
+		this.sprite_def.playAnim(animId);
+	}
+	pauseAnim()
+	{
+		this.sprite_def.pauseAnim();
+	}
+	unpauseAnim()
+	{
+		this.sprite_def.unpauseAnim();
+	}
+	draw()
+	{
+		if (!this.sheetUnits.imgDOM)
+		{
+			print('Sprite class draw error: imgDOM object is undefined.');
+			return;
+		}
+		var frame = this.sprite_def.getCurrentFrame();
+		var sx = frame.getX();
+		var sy = frame.getY();
+		var w = frame.getWidth();
+		var h = frame.getHeight();
+		var dx = this.getX();
+		var dy = this.getY();
+		this.ctx.drawImage(this.sheetUnits.imgDOM, sx, sy, w, h, dx, dy, w, h);
+	}
+}
+class SpriteVehicle extends Sprite
+{
+	constructor(name, x, y, controller, sprite_def, resource_name)
+	{
+		super(name, x, y, controller, sprite_def, resource_name);
+
+		this.dir = 0;
+		this.speed = 1;
+	}
+	getType()
+	{
+		return 'SpriteVehicle';
+	}
+	move(x, y)
+	{		
+		this.dir += x;
+		if (this.dir < 0)
+		{
+			this.dir = 8;
+		}
+		if (this.dir > 8)
+		{
+			this.dir = 0;
+		}
+		if (y != 0)
+		{
+			if (this.dir >= 0 && this.dir < 1)
+			{
+				this.x += y;
+			}
+			if (this.dir >= 1 && this.dir < 2)
+			{
+				this.x += y;
+				this.y += y;
+			}
+			if (this.dir >= 2 && this.dir < 3)
+			{
+				this.y += y;
+			}
+			if (this.dir >= 3 && this.dir < 4)
+			{
+				this.x -= y;
+				this.y += y;
+			}
+			if (this.dir >= 4 && this.dir < 5)
+			{
+				this.x -= y;
+			}
+			if (this.dir >= 5 && this.dir < 6)
+			{
+				this.x -= y;
+				this.y -= y;
+			}
+			if (this.dir >= 6 && this.dir < 7)
+			{
+				this.y -= y;
+			}
+			if (this.dir >= 7 && this.dir < 8)
+			{
+				this.x += y;
+				this.y -= y;
+			}
+
+		}
+	}
+	keyUpdate()
+	{
+		this.isMoving = false;
+		if (this.controller.isKeyPressed(68))
+		{
+			// Turn Right
+			this.move(0.05 * this.speed, 0);
+			this.isMoving = true;
+		}
+		if (this.controller.isKeyPressed(65))
+		{
+			// Turn Left
+			this.move(-0.05 * this.speed, 0);
+			this.isMoving = true;
+		}
+		if (this.controller.isKeyPressed(83))
+		{
+			// Move Forward
+			this.move(0, -1);
+			this.isMoving = true;
+		}
+		if (this.controller.isKeyPressed(87))
+		{
+			// Move Backward
+			this.move(0, 1);
+			this.isMoving = true;
+		}
+	}
+	update()
+	{
+		this.sprite_def.update();
+
+		this.keyUpdate();
+
+		var isMoving = this.isMoving;
+		
+		// Depending on the rotation of the vehicle, show the correct
+		// animation direction.
+		if (
+			(this.dir >= 0 && this.dir < 1)
+		)
+		{
+			this.playAnim('Moving East');
+		}
+		if (
+			(this.dir >= 1 && this.dir < 2)
+		)
+		{
+			this.playAnim('Moving Southeast');
+		}
+		if (
+			(this.dir >= 2 && this.dir < 3)
+		)
+		{
+			this.playAnim('Moving South');
+		}
+		if (
+			(this.dir >= 3 && this.dir < 4)
+		)
+		{
+			this.playAnim('Moving Southwest');
+		}
+		if (
+			(this.dir >= 4 && this.dir < 5)
+		)
+		{
+			this.playAnim('Moving West');
+		}
+		if (
+			(this.dir >= 5 && this.dir < 6)
+		)
+		{
+			this.playAnim('Moving Northwest');
+		}
+		if (
+			(this.dir >= 6 && this.dir < 7)
+		)
+		{
+			this.playAnim('Moving North');
+		}
+		if (
+			(this.dir >= 7 && this.dir < 8)
+		)
+		{
+			this.playAnim('Moving Northeast');
+		}
+
+
+		
+		if (!isMoving)
+		{
+			this.pauseAnim();
+		}
+		
+		this.draw();
+
+	}
+}
+
+
+// UI Views
+
+class UISprite extends Sprite
+{
+	constructor(name, x, y, controller, sprite_def, resource_name)
+	{
+		super(name, x, y, controller, sprite_def, resource_name);
+		this.list = new RectList();
+		this.selectedId = undefined;
+	}
+	addUI(r)
+	{
+		if (this.list.length == 0)
+		{
+			this.selectedId = 0;
+		}
+		return this.list.addRect(r);
+	}
+	getUI(index)
+	{
+		return this.list.getRect(index);
+	}
+	getUIAt(x, y)
+	{
+		return this.list.getRectAt(x, y);
+	}
+	keyUpdate()
+	{
+		this.isMoving = true;
+	
+		return;
+	}
+	getType()
+	{
+		return 'UISprite';
+	}
+	update()
+	{
+		this.sprite_def.update();
+
+		this.keyUpdate();
+		
+		this.draw();
+	}
+}
+class UIList
+{
+	constructor()
+	{
+		this.list = new SpriteList();
+		this.selectedId = undefined;
+	}
+	addUIFrame(f)
+	{
+		if (this.list.length == 0)
+		{
+			this.selectedId = 0;
+		}
+		return this.list.addFrame(f);
+	}
+	getUIFrame(index)
+	{
+		return this.list.getFrame(index);
+	}
+	getUIFrameAt(x, y)
+	{
+		for (var i = 0; i < this.list.length; i++)
+		{
+			var r = this.list[i];
+			if (x >= r.x && x <= r.x + r.w
+				&& y >= r.y && y <= r.y + r.h)
+			{
+				return r;
+			}
+		}
+		return false;
+	}
+}
+
+
